@@ -1,12 +1,14 @@
 import json
-import pprint
+import os
 
 from openai import OpenAI
 from pydantic import BaseModel
 from typing import List
 from scrape import get_links
+from dotenv import load_dotenv
 
-YOUR_API_KEY = "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"
+load_dotenv()
+
 system_prompt = open("system_prompt.txt", "r").read()
 user_prompt = open("user_prompt.txt", "r").read()
 
@@ -50,7 +52,7 @@ def extract_company_information():
             "json_schema": {"schema": CompanyInfo.model_json_schema()},
         }
 
-        client = OpenAI(api_key=YOUR_API_KEY, base_url="https://api.perplexity.ai")
+        client = OpenAI(api_key=os.getenv('PERPLEXITY_API_KEY'), base_url="https://api.perplexity.ai")
 
         # chat completion without streaming
         response = client.chat.completions.create(
