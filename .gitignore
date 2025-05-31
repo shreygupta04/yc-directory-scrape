@@ -1,3 +1,10 @@
-venv
-__pycache__
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
 .env
+venv
+attached_assets/credentials.json
+attached_assets/__pycache__
