@@ -58,5 +58,6 @@ def get_links(batch):
                 url = "https://www.ycombinator.com" + route
                 if url not in links:
                     links.append(requests.get(url).text)
+                    break
     driver.quit()
     return links
