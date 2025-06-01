@@ -7,6 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import StaleElementReferenceException
+
 from bs4 import BeautifulSoup
 
 def get_links(batch):
@@ -29,10 +31,16 @@ def get_links(batch):
     dropdown_selector = (".w-full.rounded-md.border-gray-300.pl-3.pr-10.pr-6.text-base."
                         "focus\\:border-indigo-500.focus\\:outline-none.focus\\:ring-indigo-500.sm\\:text-sm")
     
-    wait = WebDriverWait(driver, 5)
-    select_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, dropdown_selector)))
-    dropdown = Select(select_element)
-    dropdown.select_by_value("YCCompany_By_Launch_Date_production")
+    wait = WebDriverWait(driver, 10)
+    for _ in range(3):
+        try:
+            # Wait for element to be present again
+            select_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, dropdown_selector)))
+            dropdown = Select(select_element)
+            dropdown.select_by_value("YCCompany_By_Launch_Date_production")
+            break  # success
+        except StaleElementReferenceException:
+            continue  # retry if DOM shifted
 
     time.sleep(2)
 
