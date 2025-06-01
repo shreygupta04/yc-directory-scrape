@@ -3,51 +3,304 @@
 <head>
   <script src="https://cdn.tailwindcss.com"></script>
   <title>YC Scraper</title>
+  <style>
+    .checkmark {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: block;
+      stroke-width: 2;
+      stroke: #10b981;
+      stroke-miterlimit: 10;
+      box-shadow: inset 0px 0px 0px #10b981;
+      animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+    }
+    
+    .checkmark__circle {
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      stroke-width: 2;
+      stroke-miterlimit: 10;
+      stroke: #10b981;
+      fill: none;
+      animation: stroke .6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+    }
+    
+    .checkmark__check {
+      transform-origin: 50% 50%;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: stroke .3s cubic-bezier(0.65, 0, 0.45, 1) .8s forwards;
+    }
+    
+    @keyframes stroke {
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+    
+    @keyframes scale {
+      0%, 100% {
+        transform: none;
+      }
+      50% {
+        transform: scale3d(1.1, 1.1, 1);
+      }
+    }
+    
+    @keyframes fill {
+      100% {
+        box-shadow: inset 0px 0px 0px 30px #10b981;
+      }
+    }
+
+    .pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: .5;
+      }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 p-6 font-sans">
-  <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md">
-    <h1 class="text-2xl font-bold mb-4">YC Scraper</h1>
-    <form id="scrapeForm" class="flex gap-2 mb-4">
-      <input name="batch" id="batchInput" placeholder="Enter YC Batch (e.g. W25)" class="flex-1 p-2 border rounded" required />
-      <button class="bg-blue-600 text-white px-4 py-2 rounded" type="submit">Scrape</button>
-    </form>
-
-    <div id="progressBarContainer" class="hidden w-full bg-gray-200 rounded h-4 mb-4">
-      <div id="progressBar" class="bg-blue-500 h-4 rounded w-0"></div>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-8 font-sans">
+  <div class="max-w-7xl mx-auto px-4">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">YC Company Scraper</h1>
+      <p class="text-gray-600">Extract company information from Y Combinator batches</p>
     </div>
-    <p id="progressText" class="text-sm text-gray-600 mb-4 hidden"></p>
 
-    <iframe src="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing&rm=minimal"
-      class="w-full h-[600px] border rounded"></iframe>
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Control Panel -->
+      <div class="lg:col-span-1">
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+          <h2 class="text-xl font-semibold mb-4 text-gray-800">Scraping Controls</h2>
+          
+          <form id="scrapeForm" class="space-y-4">
+            <div>
+              <label for="batchInput" class="block text-sm font-medium text-gray-700 mb-2">
+                YC Batch
+              </label>
+              <input 
+                name="batch" 
+                id="batchInput" 
+                placeholder="e.g. W25, S24, W24" 
+                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                required 
+              />
+            </div>
+            
+            <button 
+              id="scrapeButton"
+              class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" 
+              type="submit"
+            >
+              <span id="buttonText">Start Scraping</span>
+              <div id="buttonSpinner" class="hidden inline-block w-4 h-4 ml-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </button>
+          </form>
+
+          <!-- Progress Section -->
+          <div id="progressSection" class="hidden mt-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-medium text-gray-800">Progress</h3>
+              <div id="completionIcon" class="hidden">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                  <circle class="checkmark__circle" fill="none" cx="26" cy="26" r="25"/>
+                  <path class="checkmark__check" fill="none" d="m14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+              </div>
+            </div>
+            
+            <div class="bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full w-0 transition-all duration-300 ease-out"></div>
+            </div>
+            
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Status:</span>
+                <span id="statusText" class="font-medium text-gray-800">Ready</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Progress:</span>
+                <span id="progressText" class="font-medium text-gray-800">0/0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Errors:</span>
+                <span id="errorText" class="font-medium text-red-600">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Success Message -->
+          <div id="successMessage" class="hidden mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-green-800">Scraping Completed!</h3>
+                <p class="text-sm text-green-700 mt-1">All company data has been successfully extracted and saved to the spreadsheet.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spreadsheet -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="p-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-xl font-semibold text-gray-800">Company Data</h2>
+            <p class="text-sm text-gray-600 mt-1">Live view of extracted company information</p>
+          </div>
+          <div class="relative">
+            <iframe 
+              src="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing&rm=minimal"
+              class="w-full h-[700px] border-0"
+              title="Company Data Spreadsheet"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
     const form = document.getElementById('scrapeForm');
-    const bar = document.getElementById('progressBar');
-    const container = document.getElementById('progressBarContainer');
-    const text = document.getElementById('progressText');
+    const button = document.getElementById('scrapeButton');
+    const buttonText = document.getElementById('buttonText');
+    const buttonSpinner = document.getElementById('buttonSpinner');
+    const progressSection = document.getElementById('progressSection');
+    const progressBar = document.getElementById('progressBar');
+    const statusText = document.getElementById('statusText');
+    const progressText = document.getElementById('progressText');
+    const errorText = document.getElementById('errorText');
+    const completionIcon = document.getElementById('completionIcon');
+    const successMessage = document.getElementById('successMessage');
+
+    let isScrapingActive = false;
+    let pollInterval = null;
+
+    function updateUI(state) {
+      switch(state) {
+        case 'idle':
+          button.disabled = false;
+          buttonText.textContent = 'Start Scraping';
+          buttonSpinner.classList.add('hidden');
+          progressSection.classList.add('hidden');
+          successMessage.classList.add('hidden');
+          completionIcon.classList.add('hidden');
+          statusText.textContent = 'Ready';
+          break;
+          
+        case 'starting':
+          button.disabled = true;
+          buttonText.textContent = 'Starting...';
+          buttonSpinner.classList.remove('hidden');
+          progressSection.classList.remove('hidden');
+          successMessage.classList.add('hidden');
+          completionIcon.classList.add('hidden');
+          statusText.textContent = 'Initializing scrape...';
+          progressBar.style.width = '0%';
+          break;
+          
+        case 'running':
+          button.disabled = true;
+          buttonText.textContent = 'Scraping...';
+          buttonSpinner.classList.remove('hidden');
+          statusText.textContent = 'Extracting company data...';
+          break;
+          
+        case 'completed':
+          button.disabled = false;
+          buttonText.textContent = 'Start New Scrape';
+          buttonSpinner.classList.add('hidden');
+          statusText.textContent = 'Completed successfully!';
+          completionIcon.classList.remove('hidden');
+          successMessage.classList.remove('hidden');
+          
+          // Add pulse effect to progress bar
+          progressBar.style.width = '100%';
+          progressBar.classList.add('pulse');
+          setTimeout(() => {
+            progressBar.classList.remove('pulse');
+          }, 2000);
+          break;
+      }
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      container.classList.remove("hidden");
-      text.classList.remove("hidden");
-      bar.style.width = "0%";
-      text.textContent = "Starting scrape...";
+      
+      if (isScrapingActive) return;
+      
+      isScrapingActive = true;
+      updateUI('starting');
 
-      await fetch("/start", {
-        method: "POST",
-        body: new FormData(form)
-      });
+      try {
+        const response = await fetch("/start", {
+          method: "POST",
+          body: new FormData(form)
+        });
 
-      const poll = setInterval(async () => {
-        const res = await fetch("/progress");
-        const { processed, total, errors } = await res.json();
-        const pct = total > 0 ? (processed / total) * 100 : 0;
-        bar.style.width = pct + "%";
-        text.textContent = `Processed ${processed}/${total}, Errors: ${errors}`;
+        if (!response.ok) {
+          throw new Error('Failed to start scraping');
+        }
 
-        if (processed >= total) clearInterval(poll);
+        updateUI('running');
+        startPolling();
+        
+      } catch (error) {
+        console.error('Error starting scrape:', error);
+        updateUI('idle');
+        isScrapingActive = false;
+        statusText.textContent = 'Error starting scrape';
+        statusText.className = 'font-medium text-red-600';
+      }
+    });
+
+    function startPolling() {
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch("/progress");
+          const { processed, total, errors } = await response.json();
+          
+          if (total > 0) {
+            const percentage = Math.round((processed / total) * 100);
+            progressBar.style.width = percentage + "%";
+            progressText.textContent = `${processed}/${total} (${percentage}%)`;
+            errorText.textContent = errors.toString();
+            
+            if (processed >= total) {
+              clearInterval(pollInterval);
+              isScrapingActive = false;
+              updateUI('completed');
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching progress:', error);
+        }
       }, 1000);
+    }
+
+    // Reset success message when starting new scrape
+    document.getElementById('batchInput').addEventListener('input', () => {
+      if (!isScrapingActive) {
+        successMessage.classList.add('hidden');
+        completionIcon.classList.add('hidden');
+        statusText.textContent = 'Ready';
+        statusText.className = 'font-medium text-gray-800';
+      }
     });
   </script>
 </body>
