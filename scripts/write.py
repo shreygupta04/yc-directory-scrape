@@ -69,6 +69,7 @@ def write_to_google_sheet(new_data):
     client = gspread.authorize(creds)
 
     # Open the sheet
+    print("Writing to Google Sheet...")
     sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50")
     worksheet = sheet.get_worksheet(0)  # Get the first sheet
 
@@ -84,3 +85,4 @@ def write_to_google_sheet(new_data):
     worksheet.clear()
     if not merged_df.empty:
         set_with_dataframe(worksheet, merged_df)
+        print("Data written successfully.")
