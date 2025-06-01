@@ -5,14 +5,18 @@ import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 def get_links(batch):
     chrome_options = Options()
     chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1920x1080")
+
 
 
     driver = webdriver.Chrome(options=chrome_options)
@@ -20,12 +24,13 @@ def get_links(batch):
     # Navigate to the URL
     batch = urllib.parse.quote_plus(batch)
     driver.get(f'https://www.ycombinator.com/companies?batch={batch}')
-    time.sleep(2)
 
     # Sort by launch date
     dropdown_selector = (".w-full.rounded-md.border-gray-300.pl-3.pr-10.pr-6.text-base."
                         "focus\\:border-indigo-500.focus\\:outline-none.focus\\:ring-indigo-500.sm\\:text-sm")
-    select_element = driver.find_element(By.CSS_SELECTOR, dropdown_selector)
+    
+    wait = WebDriverWait(driver, 5)
+    select_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, dropdown_selector)))
     dropdown = Select(select_element)
     dropdown.select_by_value("YCCompany_By_Launch_Date_production")
 
