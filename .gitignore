@@ -6,5 +6,5 @@ vite.config.ts.*
 *.tar.gz
 .env
 venv
-attached_assets/credentials.json
-attached_assets/__pycache__
+api/credentials.json
+__pycache__

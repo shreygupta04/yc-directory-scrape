@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>YC Scraper</title>
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+  <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md">
+    <h1 class="text-2xl font-bold mb-4">YC Scraper</h1>
+    <form id="scrapeForm" class="flex gap-2 mb-4">
+      <input name="batch" id="batchInput" placeholder="Enter YC Batch (e.g. W25)" class="flex-1 p-2 border rounded" required />
+      <button class="bg-blue-600 text-white px-4 py-2 rounded" type="submit">Scrape</button>
+    </form>
+
+    <div id="progressBarContainer" class="hidden w-full bg-gray-200 rounded h-4 mb-4">
+      <div id="progressBar" class="bg-blue-500 h-4 rounded w-0"></div>
+    </div>
+    <p id="progressText" class="text-sm text-gray-600 mb-4 hidden"></p>
+
+    <iframe src="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing&rm=minimal"
+      class="w-full h-[600px] border rounded"></iframe>
+  </div>
+
+  <script>
+    const form = document.getElementById('scrapeForm');
+    const bar = document.getElementById('progressBar');
+    const container = document.getElementById('progressBarContainer');
+    const text = document.getElementById('progressText');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      container.classList.remove("hidden");
+      text.classList.remove("hidden");
+      bar.style.width = "0%";
+      text.textContent = "Starting scrape...";
+
+      await fetch("/start", {
+        method: "POST",
+        body: new FormData(form)
+      });
+
+      const poll = setInterval(async () => {
+        const res = await fetch("/progress");
+        const { processed, total, errors } = await res.json();
+        const pct = total > 0 ? (processed / total) * 100 : 0;
+        bar.style.width = pct + "%";
+        text.textContent = `Processed ${processed}/${total}, Errors: ${errors}`;
+
+        if (processed >= total) clearInterval(poll);
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

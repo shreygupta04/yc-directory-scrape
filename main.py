@@ -1,8 +1,8 @@
 import sys
 
-from scrape import get_links
-from extract import extract_company_information
-from write import write_to_google_sheet
+from api.scrape import get_links
+from api.extract import extract_company_information
+from api.write import write_to_google_sheet
 
 
 batch = sys.argv[1]
