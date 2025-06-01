@@ -2,8 +2,8 @@
   "version": 2,
   "builds": [{ "src": "api/index.py", "use": "@vercel/python" }],
   "routes": [
-    { "src": "/", "dest": "api/index.py" },
     { "src": "/start", "dest": "api/index.py" },
-    { "src": "/progress", "dest": "api/index.py" }
+    { "src": "/progress", "dest": "api/index.py" },
+    { "src": "/", "dest": "api/index.py" }
   ]
 }
