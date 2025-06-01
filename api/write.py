@@ -54,10 +54,10 @@ def write_to_google_sheet(new_data):
     else:
         service_account_info = {
             "type": "service_account",
-            "project_id": os.environ.get("GCP_PROJECT_ID"),
+            "project_id": os.environ.get("PROJECT_ID"),
             "private_key_id": os.environ.get("PRIVATE_KEY_ID"),
-            "private_key": os.environ.get("GCP_PRIVATE_KEY"),
-            "client_email": os.environ.get("GCP_SERVICE_ACCOUNT_EMAIL"),
+            "private_key": os.environ.get("PRIVATE_KEY"),
+            "client_email": os.environ.get("CLIENT_EMAIL"),
             "client_id": os.environ.get("CLIENT_ID"),
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": "https://oauth2.googleapis.com/token",
