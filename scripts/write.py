@@ -6,7 +6,7 @@ import json
 from gspread_dataframe import get_as_dataframe, set_with_dataframe
 from oauth2client.service_account import ServiceAccountCredentials
 from google.oauth2 import service_account
-from extract import extract_company_information
+from scripts.extract import extract_company_information
 
 def merge_dataframes(old_df, new_df):
     if old_df.empty:
