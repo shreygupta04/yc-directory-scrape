@@ -1,7 +1,7 @@
-from scrape import get_links
-from extract import extract_company_information
-from write import write_to_google_sheet
-from progress import set_progress
+from api.scrape import get_links
+from api.extract import extract_company_information
+from api.write import write_to_google_sheet
+from api.progress import set_progress
 
 def run_scrape(batch):
     set_progress(0, 1, 0)  # Init

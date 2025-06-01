@@ -5,7 +5,7 @@ import sys
 from openai import OpenAI
 from pydantic import BaseModel
 from typing import List
-from scrape import get_links
+from api.scrape import get_links
 from dotenv import load_dotenv
 
 load_dotenv()

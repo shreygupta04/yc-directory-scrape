@@ -6,7 +6,7 @@ import json
 from gspread_dataframe import get_as_dataframe, set_with_dataframe
 from oauth2client.service_account import ServiceAccountCredentials
 from google.oauth2 import service_account
-from extract import extract_company_information
+from api.extract import extract_company_information
 
 def merge_dataframes(old_df, new_df):
     if old_df.empty:
@@ -47,8 +47,10 @@ def reformat_new_data(new_data):
 def write_to_google_sheet(new_data):
     new_data = reformat_new_data(new_data)
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    if os.path.exists("credentials.json"):
-        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(base_dir, "credentials.json")
+    if os.path.exists(path):
+        creds = ServiceAccountCredentials.from_json_keyfile_name(path, scope)
     else:
         service_account_info = {
             "type": "service_account",
