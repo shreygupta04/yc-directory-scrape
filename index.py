@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template, jsonify
-from api.scrape_runner import run_scrape
-from api.progress import get_progress
+from scrape_runner import run_scrape
+from scripts.progress import get_progress
 from threading import Thread
 
 app = Flask(__name__, template_folder="../templates")
