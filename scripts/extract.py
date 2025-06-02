@@ -5,7 +5,7 @@ import sys
 from openai import OpenAI
 from pydantic import BaseModel
 from typing import List
-from scripts.scrape import get_links
+from scripts.scrape import get_links_async
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -67,6 +67,7 @@ def extract_company_information(links, progress_callback=None):
             result = response.to_dict()["choices"][0]["message"]["content"]
             result = json.loads(result)
             companies.append(result)
+            print(f"Successfully extracted info for: {result.get('company_name', 'Unknown')}")
         except Exception as e:
             errors += 1
             continue
@@ -74,15 +75,6 @@ def extract_company_information(links, progress_callback=None):
             processed += 1
             if progress_callback:
                 progress_callback(processed, total, errors)
-            progress_message = {
-                "processed": processed,
-                "total": total,
-                "errors": errors,
-                "message": f"Processed {processed}/{total}"
-            }
-            print("PROGRESS:" + json.dumps(progress_message))
-    
-    print("RESULT:" + json.dumps({
-        "companies": companies
-    }))
+
+    print(f"Extraction completed. Processed: {processed}, Errors: {errors}, Companies: {len(companies)}")
     return companies
