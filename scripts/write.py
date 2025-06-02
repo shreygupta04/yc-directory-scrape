@@ -65,7 +65,7 @@ def write_to_google_sheet(new_data):
             "client_x509_cert_url": os.environ.get("CLIENT_X509_CERT_URL"),
             "universe_domain": "googleapis.com"
         }
-        creds = service_account.Credentials.from_service_account_info(service_account_info, scope)
+        creds = service_account.Credentials.from_service_account_info(service_account_info).with_scopes(scope)
     client = gspread.authorize(creds)
 
     # Open the sheet
