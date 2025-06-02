@@ -125,7 +125,7 @@ def get_links(batch: str):
                         company_urls.append(full_url)
 
         # Fetch each company page HTML
-        for url in company_urls[:1]:
+        for url in company_urls:
             try:
                 page.goto(url, wait_until='networkidle')
                 html = page.content()
