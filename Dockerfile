@@ -1,5 +1,5 @@
 # Use Playwright's official base image with all dependencies preinstalled
-FROM mcr.microsoft.com/playwright/python:v1.42.0-jammy
+FROM mcr.microsoft.com/playwright/python:v1.52.0-jammy
 
 # Set working directory
 WORKDIR /app
@@ -9,6 +9,8 @@ COPY . /app
 
 # Install Python dependencies
 RUN pip install --upgrade pip && pip install -r requirements.txt
+
+RUN playwright install
 
 # Expose port
 EXPOSE 8000
