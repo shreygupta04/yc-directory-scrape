@@ -16,4 +16,5 @@ RUN playwright install
 EXPOSE 8000
 
 # Run app with Gunicorn
-CMD ["gunicorn", "index:app", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "index:app", "--bind", "0.0.0.0:8000", "--workers=1", "--threads=1", "--timeout=300"]
+
