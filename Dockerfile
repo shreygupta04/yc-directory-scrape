@@ -19,5 +19,5 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONIOENCODING=utf-8
 
 # Run app with Gunicorn
-CMD ["gunicorn", "index:app", "--bind", "0.0.0.0:8000", "--workers=1", "--threads=1", "--timeout=300"]
+CMD ["gunicorn", "index:app", "--bind", "0.0.0.0:8000"]
 
