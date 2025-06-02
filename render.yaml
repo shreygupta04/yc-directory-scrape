@@ -3,7 +3,7 @@ services:
     name: yc-scraper-full
     env: python
     buildCommand: |
-      pip install -r requirements.txt
+      "./render-build.sh && pip install -r requirements.txt"
       playwright install
     startCommand: "gunicorn index:app"
     plan: free
