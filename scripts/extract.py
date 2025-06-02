@@ -1,5 +1,6 @@
 import json
 import os
+import gc
 
 from openai import OpenAI
 from pydantic import BaseModel
@@ -78,6 +79,9 @@ def extract_company_information_streaming(html_contents, progress_callback=None)
             
             # Clear the processed HTML from memory
             html_contents[i] = None
+
+            if processed % 5 == 0:
+                gc.collect()
 
     print(f"Extraction completed. Processed: {processed}, Errors: {errors}, Companies: {len(companies)}")
     return companies
