@@ -1,9 +1,7 @@
-import asyncio
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 from playwright.async_api import async_playwright
 from concurrent.futures import ThreadPoolExecutor
-import time
 
 async def get_company_urls_async(batch):
     """Get company URLs without loading HTML content - memory efficient"""
@@ -69,38 +67,3 @@ async def get_company_urls_async(batch):
 
     print(f"Found {len(company_urls)} company URLs")
     return company_urls
-
-async def process_company_batch(urls):
-    """Process a small batch of company URLs and return HTML content"""
-    html_contents = []
-    semaphore = asyncio.Semaphore(3)  # Reduced concurrency for memory
-    
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=True,
-            args=['--no-sandbox', '--disable-dev-shm-usage']
-        )
-        
-        try:
-            async def fetch_company_page(url):
-                async with semaphore:
-                    try:
-                        page = await browser.new_page()
-                        await page.goto(url, wait_until='domcontentloaded', timeout=20000)
-                        html = await page.content()
-                        await page.close()
-                        return html
-                    except Exception as e:
-                        print(f"Failed to load {url}: {e}")
-                        return None
-
-            tasks = [fetch_company_page(url) for url in urls]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            html_contents = [html for html in results if html and not isinstance(html, Exception)]
-            
-        finally:
-            await browser.close()
-
-    print(f"Loaded {len(html_contents)} pages for batch")
-    return html_contents

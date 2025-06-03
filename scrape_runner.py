@@ -2,8 +2,8 @@ import asyncio
 import traceback
 import gc  # Garbage collection
 
-from scripts.scrape import get_company_urls_async, process_company_batch
-from scripts.extract import extract_company_information_streaming
+from scripts.scrape import get_company_urls_async
+from scripts.extract import extract_company_information
 from scripts.write import write_to_google_sheet
 from scripts.progress import set_progress
 
@@ -30,43 +30,28 @@ async def run_scrape_async(batch):
         # Phase 2: Process companies in small batches to manage memory
         print("Phase 2: Processing companies in batches...")
         
-        BATCH_SIZE = 10  # Process 10 companies at a time
         processed_count = 0
         error_count = 0
         all_companies_data = []
         
-        for i in range(0, len(company_urls), BATCH_SIZE):
-            batch_urls = company_urls[i:i + BATCH_SIZE]
-            print(f"Processing batch {i//BATCH_SIZE + 1}/{(len(company_urls) + BATCH_SIZE - 1)//BATCH_SIZE}")
+        try:
+            # Extract information from this batch
+            all_companies_data = extract_company_information(
+                company_urls,
+                lambda p, t, e: set_progress(processed_count + p, total_companies, error_count + e)
+            )
             
-            try:
-                # Process this batch of URLs
-                batch_html_contents = await process_company_batch(batch_urls)
-                
-                # Extract information from this batch
-                batch_companies_data = extract_company_information_streaming(
-                    batch_html_contents, 
-                    lambda p, t, e: set_progress(processed_count + p, total_companies, error_count + e)
-                )
-                
-                # Add to results
-                all_companies_data.extend(batch_companies_data)
-                processed_count += len(batch_urls)
-                
-                # Force garbage collection to free memory
-                del batch_html_contents
-                del batch_companies_data
-                gc.collect()
-                
-                print(f"Completed batch. Total processed: {processed_count}/{total_companies}")
-                
-            except Exception as e:
-                print(f"Error processing batch: {e}")
-                error_count += len(batch_urls)
-                processed_count += len(batch_urls)
+            # Add to results
+            processed_count += len(all_companies_data)
             
-            # Update progress
-            set_progress(processed_count, total_companies, error_count)
+            
+        except Exception as e:
+            print(f"Error processing batch: {e}")
+            error_count += len(all_companies_data)
+            processed_count += len(all_companies_data)
+        
+        # Update progress
+        set_progress(processed_count, total_companies, error_count)
         
         if not all_companies_data:
             print("ERROR: No company information extracted!")

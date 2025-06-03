@@ -81,6 +81,25 @@ def merge_dataframes(old_df, new_df):
         if col != "Company Name" and col in merged.columns and col + '_old' in merged.columns:
             merged[col] = merged[col].combine_first(merged[col + '_old'])
             merged.drop(columns=[col + '_old'], inplace=True)
+    
+    desired_columns = [
+        "Company Name",
+        "Batch",
+        "Company Description",
+        "Geo",
+        "Website",
+        "Founder 1",
+        "Founder 1 LinkedIn",
+        "Founder 2",
+        "Founder 2 LinkedIn",
+        "Founder 3",
+        "Founder 3 LinkedIn"
+        "Founder 4",
+        "Founder 4 LinkedIn"
+        "Notes"
+    ]
+
+    merged = merged[[col for col in desired_columns if col in merged.columns]]
     return merged
 
 def write_to_google_sheet(new_data):
@@ -107,11 +126,15 @@ def write_to_google_sheet(new_data):
             merged_df = merge_dataframes(old_df, new_df)
             
             # Batch update to reduce API calls
-            worksheet.clear()
             if not merged_df.empty:
-                # Use batch update for better performance
-                set_with_dataframe(worksheet, merged_df, include_index=False, resize=True)
-                
+                set_with_dataframe(
+                    worksheet, 
+                    merged_df, 
+                    include_column_header=False,
+                    resize=False,
+                    row=2  # Start writing from second row
+                )
+                        
             print("Data written successfully.")
             break
             
