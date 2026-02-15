@@ -8,10 +8,12 @@ from bs4 import BeautifulSoup
 from typing import List
 from dotenv import load_dotenv
 
+from scripts.progress import add_log
+
 load_dotenv()
 
+
 def extract_company_information(links, progress_callback=None):
-    """Process HTML contents one at a time to minimize memory usage"""
     base_dir = os.path.dirname(__file__)
     user_prompt_path = os.path.join(base_dir, "user_prompt.txt")
     user_prompt = open(user_prompt_path, "r").read()
@@ -35,12 +37,10 @@ def extract_company_information(links, progress_callback=None):
     processed = 0
     errors = 0
     companies = []
-    
-    # Process one HTML content at a time
+
     for i, link in enumerate(links):
         try:
-            # Process this single HTML content
-            html_content = get_content(link) 
+            html_content = get_content(link)
             final_prompt = user_prompt.format(link=html_content)
             response = client.chat.completions.create(
                 model="gpt-4o-mini-2024-07-18",
@@ -50,17 +50,20 @@ def extract_company_information(links, progress_callback=None):
                         "content": final_prompt
                     }
                 ],
-                response_format={ "type": "json_object" }
+                response_format={"type": "json_object"}
             )
             result = response.to_dict()["choices"][0]["message"]["content"]
             result = json.loads(result)
             companies.append(result)
-            print(f"Successfully extracted info for: {result.get('company_name', 'Unknown')}")
-            
+            name = result.get('company_name', 'Unknown')
+            print(f"Successfully extracted info for: {name}")
+            add_log(f"Extracted: {name}")
+
         except Exception as e:
-            print(f"Error processing company {i+1}: {e}")
+            print(f"Error processing company {i + 1}: {e}")
+            add_log(f"Error on company {i + 1}: {e}")
             errors += 1
-            
+
         finally:
             processed += 1
             if progress_callback:
@@ -68,6 +71,7 @@ def extract_company_information(links, progress_callback=None):
 
     print(f"Extraction completed. Processed: {processed}, Errors: {errors}, Companies: {len(companies)}")
     return companies
+
 
 def get_content(link):
     response = requests.get(link, timeout=10, allow_redirects=True)

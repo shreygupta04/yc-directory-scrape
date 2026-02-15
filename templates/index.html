@@ -5,195 +5,173 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <title>YC Scraper</title>
   <style>
-    .checkmark {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: block;
-      stroke-width: 2;
-      stroke: #10b981;
-      stroke-miterlimit: 10;
-      box-shadow: inset 0px 0px 0px #10b981;
-      animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
     }
-    
-    .checkmark__circle {
-      stroke-dasharray: 166;
-      stroke-dashoffset: 166;
-      stroke-width: 2;
-      stroke-miterlimit: 10;
-      stroke: #10b981;
-      fill: none;
-      animation: stroke .6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-    }
-    
-    .checkmark__check {
-      transform-origin: 50% 50%;
-      stroke-dasharray: 48;
-      stroke-dashoffset: 48;
-      animation: stroke .3s cubic-bezier(0.65, 0, 0.45, 1) .8s forwards;
-    }
-    
-    @keyframes stroke {
-      100% {
-        stroke-dashoffset: 0;
-      }
-    }
-    
-    @keyframes scale {
-      0%, 100% {
-        transform: none;
-      }
-      50% {
-        transform: scale3d(1.1, 1.1, 1);
-      }
-    }
-    
-    @keyframes fill {
-      100% {
-        box-shadow: inset 0px 0px 0px 30px #10b981;
-      }
-    }
+    .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
 
-    .pulse {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    @keyframes spin-slow {
+      to { transform: rotate(360deg); }
     }
+    .spin-slow { animation: spin-slow 1.2s linear infinite; }
 
-    @keyframes pulse {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: .5;
-      }
-    }
+    #activityLog { scroll-behavior: smooth; }
   </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-8 font-sans">
-  <div class="max-w-7xl mx-auto px-4">
-    <!-- Header -->
-    <div class="text-center mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 mb-2">YC Company Scraper</h1>
-      <p class="text-gray-600">Extract company information from Y Combinator batches</p>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+
+  <div class="max-w-3xl mx-auto px-4 py-10">
+    <header class="text-center mb-10">
+      <h1 class="text-3xl font-bold tracking-tight text-gray-900">YC Company Scraper</h1>
+      <p class="mt-1 text-gray-500 text-sm">Extract company data from Y Combinator batches into Google Sheets</p>
+    </header>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <form id="scrapeForm" class="flex items-end gap-3">
+        <div class="flex-1">
+          <label for="batchInput" class="block text-sm font-medium text-gray-700 mb-1">YC Batch</label>
+          <input
+            name="batch"
+            id="batchInput"
+            placeholder="e.g. Spring 2025, Summer 2024"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+        </div>
+        <button
+          id="scrapeButton"
+          type="submit"
+          class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          <span id="buttonText">Start Scraping</span>
+          <svg id="buttonSpinner" class="hidden w-4 h-4 spin-slow" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+        </button>
+      </form>
     </div>
 
-    <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Control Panel -->
-      <div class="lg:col-span-1">
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-          <h2 class="text-xl font-semibold mb-4 text-gray-800">Scraping Controls</h2>
-          
-          <form id="scrapeForm" class="space-y-4">
-            <div>
-              <label for="batchInput" class="block text-sm font-medium text-gray-700 mb-2">
-                YC Batch
-              </label>
-              <input 
-                name="batch" 
-                id="batchInput" 
-                placeholder="e.g. Spring 2025, Summer 2024, Winter 2023" 
-                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
-                required 
-              />
-            </div>
-            
-            <button 
-              id="scrapeButton"
-              class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" 
-              type="submit"
-            >
-              <span id="buttonText">Start Scraping</span>
-              <div id="buttonSpinner" class="hidden inline-block w-4 h-4 ml-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            </button>
-          </form>
+    <!-- Progress Panel (hidden until scrape starts) -->
+    <div id="progressPanel" class="hidden space-y-6">
 
-          <!-- Progress Section -->
-          <div id="progressSection" class="hidden mt-6 space-y-4">
-            <div class="flex items-center justify-between">
-              <h3 class="text-lg font-medium text-gray-800">Progress</h3>
-              <div id="completionIcon" class="hidden">
-                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                  <circle class="checkmark__circle" fill="none" cx="26" cy="26" r="25"/>
-                  <path class="checkmark__check" fill="none" d="m14.1 27.2l7.1 7.2 16.7-16.8"/>
-                </svg>
-              </div>
-            </div>
-            
-            <div class="bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full w-0 transition-all duration-300 ease-out"></div>
-            </div>
-            
-            <div class="space-y-2 text-sm">
-              <div class="flex justify-between">
-                <span class="text-gray-600">Status:</span>
-                <span id="statusText" class="font-medium text-gray-800">Ready</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Progress:</span>
-                <span id="progressText" class="font-medium text-gray-800">0/0</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Errors:</span>
-                <span id="errorText" class="font-medium text-red-600">0</span>
-              </div>
-            </div>
+      <!-- Elapsed time + phase detail -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <span id="phaseDetail" class="text-sm text-gray-500">Initializing...</span>
           </div>
+          <span id="elapsed" class="text-xs font-mono text-gray-400">00:00</span>
+        </div>
 
-          <!-- Success Message -->
-          <div id="successMessage" class="hidden mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-green-800">Scraping Completed!</h3>
-                <p class="text-sm text-green-700 mt-1">All company data has been successfully extracted and saved to the spreadsheet.</p>
-              </div>
+        <!-- Overall progress bar -->
+        <div class="w-full bg-gray-100 rounded-full h-2 mb-5 overflow-hidden">
+          <div id="progressBar" class="h-2 rounded-full bg-blue-500 transition-all duration-500 ease-out" style="width:0%"></div>
+        </div>
+
+        <!-- Stepper -->
+        <div class="grid grid-cols-3 gap-2 text-center text-xs font-medium">
+          <div id="step-discovering" class="step-item flex flex-col items-center gap-1.5">
+            <div id="dot-discovering" class="w-8 h-8 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center transition-all duration-300">
+              <span class="text-gray-400 text-sm">1</span>
             </div>
+            <span class="text-gray-400">Discover URLs</span>
+          </div>
+          <div id="step-extracting" class="step-item flex flex-col items-center gap-1.5">
+            <div id="dot-extracting" class="w-8 h-8 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center transition-all duration-300">
+              <span class="text-gray-400 text-sm">2</span>
+            </div>
+            <span class="text-gray-400">Extract Data</span>
+          </div>
+          <div id="step-writing" class="step-item flex flex-col items-center gap-1.5">
+            <div id="dot-writing" class="w-8 h-8 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center transition-all duration-300">
+              <span class="text-gray-400 text-sm">3</span>
+            </div>
+            <span class="text-gray-400">Write to Sheets</span>
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div id="statsRow" class="hidden mt-5 pt-4 border-t border-gray-100 grid grid-cols-3 gap-4 text-center text-sm">
+          <div>
+            <div class="text-gray-400 text-xs">Processed</div>
+            <div id="statProcessed" class="font-semibold text-gray-800">0</div>
+          </div>
+          <div>
+            <div class="text-gray-400 text-xs">Total</div>
+            <div id="statTotal" class="font-semibold text-gray-800">-</div>
+          </div>
+          <div>
+            <div class="text-gray-400 text-xs">Errors</div>
+            <div id="statErrors" class="font-semibold text-red-500">0</div>
           </div>
         </div>
       </div>
 
-      <!-- Spreadsheet -->
-      <div class="lg:col-span-2">
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div class="bg-gray-50 border-b border-gray-200 px-6 py-4">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h2 class="text-xl font-semibold text-gray-800">Company Data</h2>
-                <p class="text-sm text-gray-600">Live view of extracted company information</p>
-              </div>
-              <div class="flex gap-2">
-                <a 
-                  href="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing" 
-                  target="_blank"
-                  class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md border border-blue-200 transition"
-                >
-                  Open in Google Sheets
-                </a>
-                <button 
-                  onclick="document.getElementById('spreadsheetFrame').src = document.getElementById('spreadsheetFrame').src"
-                  class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition"
-                >
-                  Refresh
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="relative">
-            <iframe 
-              id="spreadsheetFrame"
-              src="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing&rm=minimal"
-              class="w-full h-[700px] border-0"
-              title="Company Data Spreadsheet"
-            ></iframe>
-          </div>
+      <!-- Activity Log -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-gray-700">Activity Log</h3>
+          <span id="logCount" class="text-xs text-gray-400">0 events</span>
+        </div>
+        <div id="activityLog" class="max-h-52 overflow-y-auto p-4 space-y-1 text-xs font-mono text-gray-600">
+          <p class="text-gray-300 italic">Waiting for activity...</p>
         </div>
       </div>
+
+      <!-- Completion Banner -->
+      <div id="completionBanner" class="hidden bg-green-50 border border-green-200 rounded-xl p-5 text-center">
+        <div class="flex justify-center mb-2">
+          <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-green-800">Scraping Complete</h3>
+        <p class="text-green-700 text-sm mt-1">All company data has been written to the spreadsheet.</p>
+        <a
+          href="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing"
+          target="_blank"
+          class="inline-block mt-3 px-4 py-1.5 text-sm font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-md transition"
+        >
+          Open Google Sheet
+        </a>
+      </div>
+
+      <!-- Error Banner -->
+      <div id="errorBanner" class="hidden bg-red-50 border border-red-200 rounded-xl p-5 text-center">
+        <h3 class="font-semibold text-red-800">Something went wrong</h3>
+        <p id="errorDetail" class="text-red-600 text-sm mt-1"></p>
+      </div>
+    </div>
+
+    <!-- Spreadsheet (always visible) -->
+    <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-700">Company Data</h3>
+        <div class="flex gap-2">
+          <a
+            href="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing"
+            target="_blank"
+            class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Open in Sheets
+          </a>
+          <button
+            onclick="document.getElementById('spreadsheetFrame').src = document.getElementById('spreadsheetFrame').src"
+            class="text-xs text-gray-500 hover:text-gray-700 font-medium"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+      <iframe
+        id="spreadsheetFrame"
+        src="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing&rm=minimal"
+        class="w-full h-[500px] border-0"
+        title="Company Data Spreadsheet"
+      ></iframe>
     </div>
   </div>
 
@@ -202,128 +180,198 @@
     const button = document.getElementById('scrapeButton');
     const buttonText = document.getElementById('buttonText');
     const buttonSpinner = document.getElementById('buttonSpinner');
-    const progressSection = document.getElementById('progressSection');
+    const progressPanel = document.getElementById('progressPanel');
     const progressBar = document.getElementById('progressBar');
-    const statusText = document.getElementById('statusText');
-    const progressText = document.getElementById('progressText');
-    const errorText = document.getElementById('errorText');
-    const completionIcon = document.getElementById('completionIcon');
-    const successMessage = document.getElementById('successMessage');
+    const phaseDetail = document.getElementById('phaseDetail');
+    const elapsedEl = document.getElementById('elapsed');
+    const statsRow = document.getElementById('statsRow');
+    const statProcessed = document.getElementById('statProcessed');
+    const statTotal = document.getElementById('statTotal');
+    const statErrors = document.getElementById('statErrors');
+    const activityLog = document.getElementById('activityLog');
+    const logCount = document.getElementById('logCount');
+    const completionBanner = document.getElementById('completionBanner');
+    const errorBanner = document.getElementById('errorBanner');
+    const errorDetail = document.getElementById('errorDetail');
 
+    const PHASES = ['discovering', 'extracting', 'writing'];
     let isScrapingActive = false;
     let pollInterval = null;
+    let startTime = null;
+    let timerInterval = null;
+    let lastLogLength = 0;
 
-    function updateUI(state) {
-      switch(state) {
-        case 'idle':
-          button.disabled = false;
-          buttonText.textContent = 'Start Scraping';
-          buttonSpinner.classList.add('hidden');
-          progressSection.classList.add('hidden');
-          successMessage.classList.add('hidden');
-          completionIcon.classList.add('hidden');
-          statusText.textContent = 'Ready';
-          break;
-          
-        case 'starting':
-          button.disabled = true;
-          buttonText.textContent = 'Starting...';
-          buttonSpinner.classList.remove('hidden');
-          progressSection.classList.remove('hidden');
-          successMessage.classList.add('hidden');
-          completionIcon.classList.add('hidden');
-          statusText.textContent = 'Initializing scrape...';
-          progressBar.style.width = '0%';
-          break;
-          
-        case 'running':
-          button.disabled = true;
-          buttonText.textContent = 'Scraping...';
-          buttonSpinner.classList.remove('hidden');
-          statusText.textContent = 'Extracting company data...';
-          break;
-          
-        case 'completed':
-          button.disabled = false;
-          buttonText.textContent = 'Start New Scrape';
-          buttonSpinner.classList.add('hidden');
-          statusText.textContent = 'Completed successfully!';
-          completionIcon.classList.remove('hidden');
-          successMessage.classList.remove('hidden');
-          
-          // Add pulse effect to progress bar
-          progressBar.style.width = '100%';
-          progressBar.classList.add('pulse');
-          setTimeout(() => {
-            progressBar.classList.remove('pulse');
-          }, 2000);
-          break;
+    function fmtTime(ms) {
+      const s = Math.floor(ms / 1000);
+      const m = Math.floor(s / 60);
+      return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        elapsedEl.textContent = fmtTime(Date.now() - startTime);
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+    }
+
+    function setStepState(stepId, state) {
+      const dot = document.getElementById('dot-' + stepId);
+      const step = document.getElementById('step-' + stepId);
+      const label = step.querySelector('span:last-child');
+      const inner = dot.querySelector('span');
+
+      dot.className = 'w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300';
+
+      if (state === 'pending') {
+        dot.classList.add('border-gray-300', 'bg-white');
+        if (inner) { inner.className = 'text-gray-400 text-sm'; }
+        label.className = 'text-gray-400';
+      } else if (state === 'active') {
+        dot.classList.add('border-blue-500', 'bg-blue-50');
+        dot.innerHTML = '<div class="w-2.5 h-2.5 rounded-full bg-blue-500 pulse-dot"></div>';
+        label.className = 'text-blue-600 font-semibold';
+      } else if (state === 'done') {
+        dot.classList.add('border-green-500', 'bg-green-500');
+        dot.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+        label.className = 'text-green-600';
+      } else if (state === 'error') {
+        dot.classList.add('border-red-500', 'bg-red-500');
+        dot.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
+        label.className = 'text-red-600';
       }
+    }
+
+    function updateStepper(currentPhase) {
+      const idx = PHASES.indexOf(currentPhase);
+      PHASES.forEach((p, i) => {
+        if (i < idx) setStepState(p, 'done');
+        else if (i === idx) setStepState(p, 'active');
+        else setStepState(p, 'pending');
+      });
+    }
+
+    function appendLogEntries(entries) {
+      if (entries.length <= lastLogLength) return;
+      if (lastLogLength === 0) activityLog.innerHTML = '';
+      const newEntries = entries.slice(lastLogLength);
+      newEntries.forEach(msg => {
+        const p = document.createElement('p');
+        p.textContent = msg;
+        activityLog.appendChild(p);
+      });
+      lastLogLength = entries.length;
+      logCount.textContent = entries.length + ' event' + (entries.length === 1 ? '' : 's');
+      activityLog.scrollTop = activityLog.scrollHeight;
     }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
       if (isScrapingActive) return;
-      
+
       isScrapingActive = true;
-      updateUI('starting');
+      lastLogLength = 0;
+      button.disabled = true;
+      buttonText.textContent = 'Running...';
+      buttonSpinner.classList.remove('hidden');
+      progressPanel.classList.remove('hidden');
+      completionBanner.classList.add('hidden');
+      errorBanner.classList.add('hidden');
+      progressBar.style.width = '0%';
+      statsRow.classList.add('hidden');
+      phaseDetail.textContent = 'Starting...';
+      activityLog.innerHTML = '<p class="text-gray-300 italic">Waiting for activity...</p>';
+
+      PHASES.forEach(p => setStepState(p, 'pending'));
+      startTimer();
 
       try {
-        const response = await fetch("/start", {
-          method: "POST",
-          body: new FormData(form)
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to start scraping');
-        }
-
-        updateUI('running');
+        const response = await fetch('/start', { method: 'POST', body: new FormData(form) });
+        if (!response.ok) throw new Error('Failed to start');
         startPolling();
-        
-      } catch (error) {
-        console.error('Error starting scrape:', error);
-        updateUI('idle');
+      } catch (err) {
+        console.error(err);
+        stopTimer();
         isScrapingActive = false;
-        statusText.textContent = 'Error starting scrape';
-        statusText.className = 'font-medium text-red-600';
+        button.disabled = false;
+        buttonText.textContent = 'Start Scraping';
+        buttonSpinner.classList.add('hidden');
+        errorBanner.classList.remove('hidden');
+        errorDetail.textContent = 'Could not start the scrape. Is the server running?';
       }
     });
 
     function startPolling() {
       pollInterval = setInterval(async () => {
         try {
-          const response = await fetch("/progress");
-          const { processed, total, errors } = await response.json();
-          
-          if (total > 0) {
-            const percentage = Math.round((processed / total) * 100);
-            progressBar.style.width = percentage + "%";
-            progressText.textContent = `${processed}/${total} (${percentage}%)`;
-            errorText.textContent = errors.toString();
-            
-            if (processed >= total) {
-              clearInterval(pollInterval);
-              isScrapingActive = false;
-              updateUI('completed');
-            }
+          const res = await fetch('/progress');
+          const data = await res.json();
+          const { processed, total, errors, phase, phase_detail, log } = data;
+
+          phaseDetail.textContent = phase_detail || '';
+          appendLogEntries(log || []);
+
+          if (phase === 'discovering') {
+            updateStepper('discovering');
+            progressBar.style.width = '5%';
+            progressBar.classList.remove('bg-blue-500');
+            progressBar.classList.add('bg-blue-400');
+          } else if (phase === 'extracting') {
+            updateStepper('extracting');
+            statsRow.classList.remove('hidden');
+            statProcessed.textContent = processed;
+            statTotal.textContent = total;
+            statErrors.textContent = errors;
+            const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
+            progressBar.style.width = Math.max(10, pct) + '%';
+            progressBar.classList.remove('bg-blue-400');
+            progressBar.classList.add('bg-blue-500');
+          } else if (phase === 'writing') {
+            updateStepper('writing');
+            progressBar.style.width = '90%';
+            statProcessed.textContent = processed;
+          } else if (phase === 'completed') {
+            clearInterval(pollInterval);
+            stopTimer();
+            isScrapingActive = false;
+            PHASES.forEach(p => setStepState(p, 'done'));
+            progressBar.style.width = '100%';
+            progressBar.classList.remove('bg-blue-500', 'bg-blue-400');
+            progressBar.classList.add('bg-green-500');
+            statProcessed.textContent = processed;
+            statTotal.textContent = total;
+            statErrors.textContent = errors;
+            statsRow.classList.remove('hidden');
+            completionBanner.classList.remove('hidden');
+            phaseDetail.textContent = 'All done!';
+            button.disabled = false;
+            buttonText.textContent = 'Start New Scrape';
+            buttonSpinner.classList.add('hidden');
+          } else if (phase === 'error') {
+            clearInterval(pollInterval);
+            stopTimer();
+            isScrapingActive = false;
+            errorBanner.classList.remove('hidden');
+            errorDetail.textContent = phase_detail || 'An unexpected error occurred.';
+            progressBar.classList.remove('bg-blue-500', 'bg-blue-400');
+            progressBar.classList.add('bg-red-500');
+            const currentIdx = PHASES.findIndex(p => {
+              const dot = document.getElementById('dot-' + p);
+              return dot && dot.innerHTML.includes('pulse-dot');
+            });
+            if (currentIdx >= 0) setStepState(PHASES[currentIdx], 'error');
+            button.disabled = false;
+            buttonText.textContent = 'Retry';
+            buttonSpinner.classList.add('hidden');
           }
-        } catch (error) {
-          console.error('Error fetching progress:', error);
+        } catch (err) {
+          console.error('Poll error:', err);
         }
       }, 1000);
     }
-
-    // Reset success message when starting new scrape
-    document.getElementById('batchInput').addEventListener('input', () => {
-      if (!isScrapingActive) {
-        successMessage.classList.add('hidden');
-        completionIcon.classList.add('hidden');
-        statusText.textContent = 'Ready';
-        statusText.className = 'font-medium text-gray-800';
-      }
-    });
   </script>
 </body>
 </html>
