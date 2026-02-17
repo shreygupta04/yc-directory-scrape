@@ -51,7 +51,7 @@ def start_scrape():
     thread.daemon = True  # Make thread daemon so it doesn't prevent app shutdown
     thread.start()
     
-    return jsonify({"status": "started"})
+    return jsonify({"status": "started", "batch": batch})
 
 @app.route("/progress", methods=["GET"])
 def progress():
