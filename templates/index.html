@@ -119,6 +119,30 @@
                 </svg>
               </div>
             </div>
+
+            <div id="stepper" class="space-y-3">
+              <div class="flex items-start" data-step="scraping_urls">
+                <div id="stepCircle-scraping_urls" class="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700">1</div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium text-gray-800">Find companies</p>
+                  <p id="stepText-scraping_urls" class="text-xs text-gray-500">Pending</p>
+                </div>
+              </div>
+              <div class="flex items-start" data-step="extracting">
+                <div id="stepCircle-extracting" class="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700">2</div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium text-gray-800">Extract data</p>
+                  <p id="stepText-extracting" class="text-xs text-gray-500">Pending</p>
+                </div>
+              </div>
+              <div class="flex items-start" data-step="writing">
+                <div id="stepCircle-writing" class="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700">3</div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium text-gray-800">Write to Sheets</p>
+                  <p id="stepText-writing" class="text-xs text-gray-500">Pending</p>
+                </div>
+              </div>
+            </div>
             
             <div class="bg-gray-200 rounded-full h-3 overflow-hidden">
               <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full w-0 transition-all duration-300 ease-out"></div>
@@ -126,16 +150,38 @@
             
             <div class="space-y-2 text-sm">
               <div class="flex justify-between">
-                <span class="text-gray-600">Status:</span>
-                <span id="statusText" class="font-medium text-gray-800">Ready</span>
+                <span class="text-gray-600">Now:</span>
+                <span class="flex items-center gap-2 font-medium text-gray-800">
+                  <span id="phaseSpinner" class="hidden inline-block w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
+                  <span id="statusText">Ready</span>
+                </span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600">Progress:</span>
+                <span class="text-gray-600">Elapsed:</span>
+                <span id="elapsedText" class="font-medium text-gray-800">00:00</span>
+              </div>
+              <div id="countsRow" class="flex justify-between">
+                <span class="text-gray-600">Companies:</span>
                 <span id="progressText" class="font-medium text-gray-800">0/0</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-600">Errors:</span>
                 <span id="errorText" class="font-medium text-red-600">0</span>
+              </div>
+            </div>
+
+            <div id="errorMessage" class="hidden p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div class="flex items-start">
+                <div class="flex-shrink-0">
+                  <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.5a.75.75 0 00-1.5 0v5a.75.75 0 001.5 0v-5zM10 14a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-red-800">Scrape failed</h3>
+                  <p id="errorMessageText" class="text-sm text-red-700 mt-1">An error occurred.</p>
+                  <p class="text-xs text-red-700 mt-2">Try a different batch name (e.g. “Summer 2024”) and ensure your API keys are configured.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -167,6 +213,12 @@
                 <p class="text-sm text-gray-600">Live view of extracted company information</p>
               </div>
               <div class="flex gap-2">
+                <button 
+                  id="toggleSheet"
+                  class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition"
+                >
+                  Show Spreadsheet
+                </button>
                 <a 
                   href="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing" 
                   target="_blank"
@@ -175,7 +227,7 @@
                   Open in Google Sheets
                 </a>
                 <button 
-                  onclick="document.getElementById('spreadsheetFrame').src = document.getElementById('spreadsheetFrame').src"
+                  id="refreshSheet"
                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition"
                 >
                   Refresh
@@ -185,12 +237,17 @@
           </div>
 
           <div class="relative">
-            <iframe 
-              id="spreadsheetFrame"
-              src="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing&rm=minimal"
-              class="w-full h-[700px] border-0"
-              title="Company Data Spreadsheet"
-            ></iframe>
+            <div id="spreadsheetWrapper" class="hidden">
+              <iframe 
+                id="spreadsheetFrame"
+                src="https://docs.google.com/spreadsheets/d/1jFLtlpbTBKzSEsThdD9tfP8AQr-_TIPOrVWMjr_Zl50/edit?usp=sharing&rm=minimal"
+                class="w-full h-[700px] border-0"
+                title="Company Data Spreadsheet"
+              ></iframe>
+            </div>
+            <div id="spreadsheetPlaceholder" class="px-6 py-8 text-sm text-gray-600">
+              Spreadsheet is hidden to keep the UI focused on progress. Click “Show Spreadsheet” to view it.
+            </div>
           </div>
         </div>
       </div>
@@ -202,112 +259,239 @@
     const button = document.getElementById('scrapeButton');
     const buttonText = document.getElementById('buttonText');
     const buttonSpinner = document.getElementById('buttonSpinner');
+
     const progressSection = document.getElementById('progressSection');
     const progressBar = document.getElementById('progressBar');
     const statusText = document.getElementById('statusText');
+    const phaseSpinner = document.getElementById('phaseSpinner');
+    const elapsedText = document.getElementById('elapsedText');
+
+    const countsRow = document.getElementById('countsRow');
     const progressText = document.getElementById('progressText');
     const errorText = document.getElementById('errorText');
+
     const completionIcon = document.getElementById('completionIcon');
     const successMessage = document.getElementById('successMessage');
 
+    const errorMessage = document.getElementById('errorMessage');
+    const errorMessageText = document.getElementById('errorMessageText');
+
+    const stepCircles = {
+      scraping_urls: document.getElementById('stepCircle-scraping_urls'),
+      extracting: document.getElementById('stepCircle-extracting'),
+      writing: document.getElementById('stepCircle-writing'),
+    };
+
+    const stepTexts = {
+      scraping_urls: document.getElementById('stepText-scraping_urls'),
+      extracting: document.getElementById('stepText-extracting'),
+      writing: document.getElementById('stepText-writing'),
+    };
+
+    const toggleSheetButton = document.getElementById('toggleSheet');
+    const refreshSheetButton = document.getElementById('refreshSheet');
+    const spreadsheetWrapper = document.getElementById('spreadsheetWrapper');
+    const spreadsheetPlaceholder = document.getElementById('spreadsheetPlaceholder');
+    const spreadsheetFrame = document.getElementById('spreadsheetFrame');
+
+    const STEPS = ['scraping_urls', 'extracting', 'writing'];
+
     let isScrapingActive = false;
     let pollInterval = null;
+    let startTimeMs = null;
+    let sheetVisible = false;
+
+    function formatElapsed(ms) {
+      const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function setSheetVisible(visible) {
+      sheetVisible = visible;
+      if (sheetVisible) {
+        spreadsheetWrapper.classList.remove('hidden');
+        spreadsheetPlaceholder.classList.add('hidden');
+        toggleSheetButton.textContent = 'Hide Spreadsheet';
+      } else {
+        spreadsheetWrapper.classList.add('hidden');
+        spreadsheetPlaceholder.classList.remove('hidden');
+        toggleSheetButton.textContent = 'Show Spreadsheet';
+      }
+    }
+
+    function resetProgressUI() {
+      completionIcon.classList.add('hidden');
+      successMessage.classList.add('hidden');
+      errorMessage.classList.add('hidden');
+
+      statusText.textContent = 'Ready';
+      statusText.className = '';
+
+      elapsedText.textContent = '00:00';
+
+      countsRow.classList.remove('hidden');
+      progressText.textContent = '0/0';
+      errorText.textContent = '0';
+
+      phaseSpinner.classList.add('hidden');
+
+      progressBar.style.width = '0%';
+      progressBar.classList.remove('animate-pulse');
+
+      for (const phase of STEPS) {
+        stepCircles[phase].className = 'flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700';
+        stepCircles[phase].textContent = String(STEPS.indexOf(phase) + 1);
+        stepTexts[phase].textContent = 'Pending';
+      }
+    }
+
+    function updateStepper(phase, status, message) {
+      let idx = STEPS.indexOf(phase);
+      if (phase === 'completed') idx = STEPS.length;
+      if (idx === -1) idx = 0;
+
+      for (let i = 0; i < STEPS.length; i++) {
+        const step = STEPS[i];
+        const circle = stepCircles[step];
+        const text = stepTexts[step];
+
+        const isCompleted = i < idx;
+        const isActive = i === idx && phase !== 'completed';
+
+        if (isCompleted) {
+          circle.className = 'flex h-7 w-7 items-center justify-center rounded-full bg-green-600 text-xs font-semibold text-white';
+          circle.textContent = '✓';
+          text.textContent = 'Done';
+        } else if (isActive) {
+          circle.className = 'flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white';
+          circle.textContent = String(i + 1);
+          text.textContent = message || 'In progress...';
+        } else {
+          circle.className = 'flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700';
+          circle.textContent = String(i + 1);
+          text.textContent = 'Pending';
+        }
+      }
+
+      if (status === 'error') {
+        for (const step of STEPS) {
+          stepTexts[step].textContent = 'Stopped';
+        }
+      }
+    }
 
     function updateUI(state) {
-      switch(state) {
+      switch (state) {
         case 'idle':
           button.disabled = false;
           buttonText.textContent = 'Start Scraping';
           buttonSpinner.classList.add('hidden');
           progressSection.classList.add('hidden');
-          successMessage.classList.add('hidden');
-          completionIcon.classList.add('hidden');
-          statusText.textContent = 'Ready';
+          resetProgressUI();
           break;
-          
+
         case 'starting':
           button.disabled = true;
           buttonText.textContent = 'Starting...';
           buttonSpinner.classList.remove('hidden');
           progressSection.classList.remove('hidden');
-          successMessage.classList.add('hidden');
-          completionIcon.classList.add('hidden');
-          statusText.textContent = 'Initializing scrape...';
-          progressBar.style.width = '0%';
+          resetProgressUI();
+          statusText.textContent = 'Starting scraper...';
+          phaseSpinner.classList.remove('hidden');
+          updateStepper('scraping_urls', 'running', 'Starting...');
           break;
-          
+
         case 'running':
           button.disabled = true;
           buttonText.textContent = 'Scraping...';
           buttonSpinner.classList.remove('hidden');
-          statusText.textContent = 'Extracting company data...';
           break;
-          
+
         case 'completed':
           button.disabled = false;
           buttonText.textContent = 'Start New Scrape';
           buttonSpinner.classList.add('hidden');
-          statusText.textContent = 'Completed successfully!';
           completionIcon.classList.remove('hidden');
           successMessage.classList.remove('hidden');
-          
-          // Add pulse effect to progress bar
+
           progressBar.style.width = '100%';
           progressBar.classList.add('pulse');
           setTimeout(() => {
             progressBar.classList.remove('pulse');
           }, 2000);
           break;
+
+        case 'error':
+          button.disabled = false;
+          buttonText.textContent = 'Try Again';
+          buttonSpinner.classList.add('hidden');
+          break;
       }
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      if (isScrapingActive) return;
-      
-      isScrapingActive = true;
-      updateUI('starting');
-
-      try {
-        const response = await fetch("/start", {
-          method: "POST",
-          body: new FormData(form)
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to start scraping');
-        }
-
-        updateUI('running');
-        startPolling();
-        
-      } catch (error) {
-        console.error('Error starting scrape:', error);
-        updateUI('idle');
-        isScrapingActive = false;
-        statusText.textContent = 'Error starting scrape';
-        statusText.className = 'font-medium text-red-600';
+    function stopPolling() {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
       }
-    });
+    }
 
-    function startPolling() {
+    async function startPolling() {
+      stopPolling();
       pollInterval = setInterval(async () => {
         try {
-          const response = await fetch("/progress");
-          const { processed, total, errors } = await response.json();
-          
-          if (total > 0) {
+          const response = await fetch('/progress');
+          const data = await response.json();
+
+          const processed = data.processed ?? 0;
+          const total = data.total ?? 0;
+          const errors = data.errors ?? 0;
+          const phase = data.phase ?? 'idle';
+          const message = data.message ?? '';
+          const status = data.status ?? 'running';
+
+          if (startTimeMs) {
+            elapsedText.textContent = formatElapsed(Date.now() - startTimeMs);
+          }
+
+          phaseSpinner.classList.toggle('hidden', status !== 'running');
+
+          statusText.textContent = message || (status === 'running' ? 'Working...' : '');
+          statusText.className = status === 'error' ? 'text-red-600' : status === 'completed' ? 'text-green-700' : 'text-gray-800';
+
+          errorText.textContent = String(errors);
+
+          updateStepper(phase, status, message);
+
+          if (phase === 'extracting' && total > 0) {
+            countsRow.classList.remove('hidden');
             const percentage = Math.round((processed / total) * 100);
-            progressBar.style.width = percentage + "%";
+            progressBar.classList.remove('animate-pulse');
+            progressBar.style.width = `${percentage}%`;
             progressText.textContent = `${processed}/${total} (${percentage}%)`;
-            errorText.textContent = errors.toString();
-            
-            if (processed >= total) {
-              clearInterval(pollInterval);
-              isScrapingActive = false;
-              updateUI('completed');
-            }
+          } else {
+            countsRow.classList.add('hidden');
+            progressBar.style.width = '100%';
+            progressBar.classList.toggle('animate-pulse', status === 'running');
+          }
+
+          if (status === 'error') {
+            stopPolling();
+            isScrapingActive = false;
+            phaseSpinner.classList.add('hidden');
+
+            errorMessageText.textContent = message || 'Scraping failed.';
+            errorMessage.classList.remove('hidden');
+            updateUI('error');
+          }
+
+          if (status === 'completed' && phase === 'completed') {
+            stopPolling();
+            isScrapingActive = false;
+            phaseSpinner.classList.add('hidden');
+            updateUI('completed');
           }
         } catch (error) {
           console.error('Error fetching progress:', error);
@@ -315,15 +499,63 @@
       }, 1000);
     }
 
-    // Reset success message when starting new scrape
-    document.getElementById('batchInput').addEventListener('input', () => {
-      if (!isScrapingActive) {
-        successMessage.classList.add('hidden');
-        completionIcon.classList.add('hidden');
-        statusText.textContent = 'Ready';
-        statusText.className = 'font-medium text-gray-800';
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (isScrapingActive) return;
+
+      isScrapingActive = true;
+      startTimeMs = Date.now();
+      updateUI('starting');
+
+      try {
+        const response = await fetch('/start', {
+          method: 'POST',
+          body: new FormData(form),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Failed to start scraping');
+        }
+
+        updateUI('running');
+        await startPolling();
+      } catch (error) {
+        console.error('Error starting scrape:', error);
+        stopPolling();
+        isScrapingActive = false;
+
+        progressSection.classList.remove('hidden');
+        phaseSpinner.classList.add('hidden');
+
+        errorMessageText.textContent = error.message || 'Error starting scrape.';
+        errorMessage.classList.remove('hidden');
+        statusText.textContent = 'Unable to start';
+        statusText.className = 'text-red-600';
+        updateUI('error');
       }
     });
+
+    document.getElementById('batchInput').addEventListener('input', () => {
+      if (!isScrapingActive) {
+        updateUI('idle');
+      }
+    });
+
+    toggleSheetButton.addEventListener('click', () => {
+      setSheetVisible(!sheetVisible);
+    });
+
+    refreshSheetButton.addEventListener('click', () => {
+      if (!sheetVisible) {
+        setSheetVisible(true);
+      }
+      spreadsheetFrame.src = spreadsheetFrame.src;
+    });
+
+    updateUI('idle');
+    setSheetVisible(false);
   </script>
 </body>
 </html>
