@@ -1,12 +1,14 @@
 import json
 import os
-import requests
+from typing import List
 
+import requests
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from openai import OpenAI
 from pydantic import BaseModel
-from bs4 import BeautifulSoup
-from typing import List
-from dotenv import load_dotenv
+
+from scripts.progress import add_error_detail, add_recent_item
 
 load_dotenv()
 
@@ -55,11 +57,14 @@ def extract_company_information(links, progress_callback=None):
             result = response.to_dict()["choices"][0]["message"]["content"]
             result = json.loads(result)
             companies.append(result)
-            print(f"Successfully extracted info for: {result.get('company_name', 'Unknown')}")
-            
+            company_name = result.get('company_name', 'Unknown')
+            print(f"Successfully extracted info for: {company_name}")
+            add_recent_item(company_name)
+
         except Exception as e:
             print(f"Error processing company {i+1}: {e}")
             errors += 1
+            add_error_detail(f"Company {i+1}: {str(e)[:80]}")
             
         finally:
             processed += 1

@@ -3,7 +3,7 @@ from urllib.parse import quote_plus
 from playwright.async_api import async_playwright
 from concurrent.futures import ThreadPoolExecutor
 
-async def get_company_urls_async(batch):
+async def get_company_urls_async(batch, progress_callback=None):
     """Get company URLs without loading HTML content - memory efficient"""
     batch = quote_plus(batch)
     listing_url = f'https://www.ycombinator.com/companies?batch={batch}'
@@ -39,13 +39,17 @@ async def get_company_urls_async(batch):
             while scroll_attempts < max_attempts:
                 await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                 await page.wait_for_timeout(1500)
-                
+
                 curr_height = await page.evaluate("document.body.scrollHeight")
+                scroll_attempts += 1
+
+                if progress_callback:
+                    progress_callback(scroll_attempts, max_attempts)
+
                 if curr_height == prev_height:
                     break
-                    
+
                 prev_height = curr_height
-                scroll_attempts += 1
 
             # Extract only URLs - don't load content yet
             company_urls = await page.evaluate('''
